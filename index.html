@@ -1,0 +1,1591 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title id="pageTitle">GameFusion | Official Hub & VoidSMP</title>
+  <style>
+    :root {
+      --bg-dark: #030407;
+      --card-bg: rgba(10, 12, 22, 0.8);
+      --card-border: rgba(145, 70, 255, 0.35);
+      --primary: #9146ff;
+      --primary-glow: rgba(145, 70, 255, 0.7);
+      --yt-red: #ff0055;
+      --yt-glow: rgba(255, 0, 85, 0.6);
+      --discord-blue: #5865f2;
+      --discord-glow: rgba(88, 101, 242, 0.6);
+      --void-cyan: #00f0ff;
+      --void-glow: rgba(0, 240, 255, 0.7);
+      --text-main: #f0f3ff;
+      --text-sub: #949ab5;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      user-select: none;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow-x: hidden;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    #bg-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -2;
+      pointer-events: none;
+    }
+
+    .mouse-glow {
+      position: fixed;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--void-glow) 0%, rgba(145, 70, 255, 0.08) 45%, transparent 70%);
+      pointer-events: none;
+      transform: translate(-50%, -50%);
+      z-index: -1;
+      will-change: left, top;
+    }
+
+    nav.top-nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background: rgba(3, 4, 7, 0.9);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(145, 70, 255, 0.25);
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+
+    nav.top-nav a {
+      color: var(--text-sub);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 1.05rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      transition: color 0.3s ease, text-shadow 0.3s ease;
+    }
+
+    nav.top-nav a:hover {
+      color: var(--void-cyan);
+      text-shadow: 0 0 12px var(--void-glow);
+    }
+
+    .nav-controls {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    .settings-btn, .admin-guide-btn, .logout-admin-btn, .undo-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 0.5rem 0.9rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.9rem;
+      transition: all 0.3s ease;
+    }
+
+    .settings-btn:hover {
+      border-color: var(--void-cyan);
+      box-shadow: 0 0 15px var(--void-glow);
+    }
+
+    .undo-btn {
+      display: none;
+      background: rgba(145, 70, 255, 0.15);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    .undo-btn:hover {
+      background: rgba(145, 70, 255, 0.3);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .admin-logged-in .undo-btn {
+      display: inline-block;
+    }
+
+    .admin-guide-btn {
+      background: rgba(0, 240, 255, 0.15);
+      border-color: var(--void-cyan);
+      color: var(--void-cyan);
+      display: none;
+    }
+    .admin-logged-in .admin-guide-btn, .coowner-logged-in .admin-guide-btn {
+      display: inline-block;
+    }
+
+    .logout-admin-btn {
+      background: rgba(255, 77, 77, 0.15);
+      border-color: #ff4d4d;
+      color: #ff4d4d;
+      display: none;
+    }
+    .admin-logged-in .logout-admin-btn, .coowner-logged-in .logout-admin-btn {
+      display: inline-block;
+    }
+
+    .role-badge-nav {
+      display: none;
+      font-weight: 800;
+      font-size: 0.9rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 8px;
+    }
+    .admin-logged-in .role-badge-nav {
+      display: inline-block;
+      background: rgba(255, 51, 51, 0.15);
+      color: #ff3333;
+      border: 1px solid rgba(255, 51, 51, 0.4);
+    }
+    .coowner-logged-in .role-badge-nav {
+      display: inline-block;
+      background: rgba(51, 133, 255, 0.15);
+      color: #3385ff;
+      border: 1px solid rgba(51, 133, 255, 0.4);
+    }
+
+    section, header {
+      scroll-margin-top: 100px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 6.5rem 1.5rem 2rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      text-align: center;
+      padding: 2.5rem 0 2rem;
+      position: relative;
+    }
+
+    .title-glitch {
+      font-size: 4.2rem;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 5px;
+      background: linear-gradient(135deg, #fff 0%, var(--primary) 50%, var(--void-cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 40px rgba(145, 70, 255, 0.6);
+      margin-bottom: 0.5rem;
+    }
+
+    .sub-title {
+      font-size: 1.25rem;
+      color: var(--text-sub);
+      margin-bottom: 1.5rem;
+    }
+
+    .sub-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: linear-gradient(135deg, var(--yt-red), #ff4d4d);
+      color: #fff;
+      padding: 0.6rem 1.5rem;
+      border-radius: 50px;
+      font-size: 1rem;
+      font-weight: 800;
+      box-shadow: 0 0 25px var(--yt-glow);
+      animation: pulse 2s infinite;
+      margin-bottom: 2.2rem;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); box-shadow: 0 0 15px var(--yt-glow); }
+      50% { transform: scale(1.06); box-shadow: 0 0 30px var(--yt-glow); }
+      100% { transform: scale(1); box-shadow: 0 0 15px var(--yt-glow); }
+    }
+
+    .social-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .social-row { grid-template-columns: 1fr; }
+      nav.top-nav { flex-direction: column; gap: 1rem; }
+    }
+
+    .social-btn {
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 1.3rem 1.6rem;
+      border-radius: 18px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: 800;
+      font-size: 1.2rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .social-btn::before {
+      content: '';
+      position: absolute;
+      top: var(--y, 50%);
+      left: var(--x, 50%);
+      width: 0;
+      height: 0;
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.25) 0%, transparent 70%);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.5s ease, height 0.5s ease;
+      pointer-events: none;
+    }
+
+    .social-btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .social-icon { font-size: 1.5rem; }
+
+    .social-btn.yt:hover {
+      background: rgba(255, 0, 85, 0.15);
+      border-color: var(--yt-red);
+      box-shadow: 0 0 35px var(--yt-glow);
+      transform: translateY(-4px);
+    }
+
+    .social-btn.twitch:hover {
+      background: rgba(145, 70, 255, 0.15);
+      border-color: var(--primary);
+      box-shadow: 0 0 35px var(--primary-glow);
+      transform: translateY(-4px);
+    }
+
+    .social-btn.discord:hover {
+      background: rgba(88, 101, 242, 0.15);
+      border-color: var(--discord-blue);
+      box-shadow: 0 0 35px var(--discord-glow);
+      transform: translateY(-4px);
+    }
+
+    .card {
+      background: var(--card-bg);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid var(--card-border);
+      border-radius: 26px;
+      padding: 2.5rem;
+      margin-bottom: 2.8rem;
+      box-shadow: 0 15px 50px 0 rgba(0, 0, 0, 0.6);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      transform: translateZ(0);
+    }
+
+    .card:hover {
+      border-color: var(--void-cyan);
+      box-shadow: 0 20px 60px 0 var(--void-glow);
+    }
+
+    .section-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: var(--void-cyan);
+      text-transform: uppercase;
+      text-shadow: 0 0 15px var(--void-glow);
+      margin-bottom: 1.2rem;
+    }
+
+    .about-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .about-item {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      padding: 1.5rem;
+      border-radius: 18px;
+      box-shadow: inset 0 0 15px rgba(0, 240, 255, 0.05);
+    }
+
+    .about-item h4 {
+      color: var(--void-cyan);
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+    }
+
+    .about-item p, .about-item ul {
+      color: var(--text-sub);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .about-item ul {
+      list-style-type: none;
+      padding-left: 0;
+    }
+
+    .about-item li { margin-bottom: 0.4rem; }
+
+    .about-item a {
+      color: var(--void-cyan);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .about-item a:hover { text-decoration: underline; }
+
+    .server-status-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.8rem;
+      align-items: center;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 1.3rem 1.8rem;
+      border-radius: 16px;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(0, 240, 255, 0.25);
+    }
+
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      font-size: 1.05rem;
+      color: var(--text-sub);
+    }
+
+    .status-dot {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      background: #00ff66;
+      box-shadow: 0 0 14px #00ff66;
+    }
+
+    .ip-box {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(0, 240, 255, 0.08);
+      border: 1px dashed var(--void-cyan);
+      padding: 1.3rem 2rem;
+      border-radius: 16px;
+      margin: 1.5rem 0;
+      cursor: pointer;
+      transition: background 0.3s ease, transform 0.2s ease;
+    }
+
+    .ip-box:hover {
+      background: rgba(0, 240, 255, 0.18);
+      transform: scale(1.01);
+    }
+
+    .ip-text {
+      font-family: monospace;
+      font-size: 1.5rem;
+      color: #fff;
+      letter-spacing: 2px;
+    }
+
+    .copy-btn {
+      background: var(--void-cyan);
+      color: #030407;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 0 15px var(--void-glow);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 1.2rem;
+      margin-top: 1.2rem;
+      margin-bottom: 2rem;
+    }
+
+    .feature-tag {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 1.1rem 1.3rem;
+      border-radius: 14px;
+      font-size: 1rem;
+    }
+
+    .guide-box {
+      background: rgba(145, 70, 255, 0.05);
+      border: 1px solid rgba(145, 70, 255, 0.3);
+      padding: 1.8rem;
+      border-radius: 16px;
+      margin-top: 2rem;
+    }
+
+    .guide-title {
+      font-size: 1.3rem;
+      color: #fff;
+      margin-bottom: 0.8rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .guide-text {
+      color: var(--text-sub);
+      line-height: 1.7;
+      font-size: 1.05rem;
+    }
+
+    .guide-link {
+      color: var(--void-cyan);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .guide-link:hover { text-decoration: underline; }
+
+    .rules-container {
+      margin-top: 2.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding-top: 2rem;
+    }
+
+    .rules-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      margin-top: 1rem;
+    }
+
+    .rule-card {
+      background: rgba(0, 0, 0, 0.35);
+      border-left: 5px solid var(--primary);
+      padding: 1.2rem 1.5rem;
+      border-radius: 0 14px 14px 0;
+      line-height: 1.6;
+    }
+
+    .rule-card.strict { border-left-color: #ff4d4d; }
+
+    .clan-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .owners-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 1.5rem;
+      margin: 1.5rem 0;
+    }
+
+    .owner-card {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(145, 70, 255, 0.4);
+      padding: 1.6rem;
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      gap: 1.3rem;
+      box-shadow: inset 0 0 20px rgba(145, 70, 255, 0.08);
+    }
+
+    .owner-avatar-emoji {
+      width: 65px;
+      height: 65px;
+      border-radius: 50%;
+      background: rgba(0, 240, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      border: 2px solid var(--void-cyan);
+      box-shadow: 0 0 15px var(--void-glow);
+    }
+
+    .secret-admin-trigger {
+      background: transparent;
+      border: none;
+      color: rgba(148, 154, 181, 0.2);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.2rem 0.5rem;
+      transition: color 0.3s ease;
+      display: inline-block;
+      vertical-align: middle;
+      margin-left: 5px;
+    }
+
+    .secret-admin-trigger:hover { color: var(--void-cyan); }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(3, 4, 7, 0.85);
+      backdrop-filter: blur(15px);
+      z-index: 2000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: rgba(13, 16, 30, 0.95);
+      border: 2px solid var(--void-cyan);
+      border-radius: 24px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 450px;
+      box-shadow: 0 0 50px var(--void-glow);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-overlay.active .modal-box { transform: scale(1); }
+
+    .modal-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--void-cyan);
+      margin-bottom: 1.5rem;
+      text-transform: uppercase;
+      text-align: center;
+    }
+
+    .modal-input, .modal-select {
+      width: 100%;
+      background: #060810 !important;
+      border: 1px solid var(--void-cyan);
+      padding: 0.9rem 1.2rem;
+      border-radius: 12px;
+      color: #fff !important;
+      font-size: 1.1rem;
+      outline: none;
+      margin-bottom: 1.2rem;
+      box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .modal-input:focus, .modal-select:focus {
+      border-color: var(--void-cyan);
+      box-shadow: 0 0 15px var(--void-glow);
+    }
+
+    .modal-select option {
+      background-color: #060810 !important;
+      color: #fff !important;
+      padding: 10px;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .modal-btn-confirm {
+      flex: 1;
+      background: var(--void-cyan);
+      color: #030407;
+      border: none;
+      padding: 0.9rem;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 0 15px var(--void-glow);
+    }
+
+    .modal-btn-cancel {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      padding: 0.9rem;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .admin-panel {
+      display: none;
+      background: rgba(0, 0, 0, 0.7);
+      border: 1px solid var(--void-cyan);
+      border-radius: 18px;
+      padding: 2rem;
+      margin-top: 1.8rem;
+    }
+
+    .admin-panel.active { display: block; }
+
+    .admin-form {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .admin-input, .admin-select {
+      background: #060810 !important;
+      border: 1px solid var(--void-cyan);
+      padding: 0.8rem 1.3rem;
+      border-radius: 12px;
+      color: #fff !important;
+      outline: none;
+      font-size: 1rem;
+      flex: 1;
+    }
+
+    .admin-btn {
+      background: var(--void-cyan);
+      color: #030407;
+      border: none;
+      padding: 0.8rem 1.6rem;
+      border-radius: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      box-shadow: 0 0 15px var(--void-glow);
+    }
+
+    .reset-layout-btn {
+      background: rgba(255, 77, 77, 0.2);
+      border: 1px solid #ff4d4d;
+      color: #ff4d4d;
+      padding: 0.6rem 1.2rem;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 700;
+      margin-top: 1rem;
+    }
+
+    .public-member-section {
+      margin-top: 2.2rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(145, 70, 255, 0.2);
+      padding: 1.8rem;
+      border-radius: 20px;
+    }
+
+    .member-list {
+      list-style: none;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 1.2rem;
+      margin-top: 1rem;
+      min-height: 80px;
+    }
+
+    .member-item {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(145, 70, 255, 0.03));
+      padding: 1.1rem 1.4rem;
+      border-radius: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      cursor: default;
+    }
+
+    .admin-logged-in .member-item { cursor: grab; }
+
+    .badge-owner { color: #ff3333; font-weight: 900; background: rgba(255, 51, 51, 0.1); padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.9rem; text-shadow: 0 0 8px rgba(255, 51, 51, 0.6); }
+    .badge-coowner { color: #3385ff; font-weight: 900; background: rgba(51, 133, 255, 0.1); padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.9rem; text-shadow: 0 0 8px rgba(51, 133, 255, 0.6); }
+    .badge-trusted { color: #ff33cc; font-weight: 900; background: rgba(255, 51, 204, 0.1); padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.9rem; text-shadow: 0 0 8px rgba(255, 51, 204, 0.6); }
+    .badge-member { color: #a0a5c0; font-weight: 700; background: rgba(160, 165, 192, 0.1); padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.9rem; }
+
+    .remove-btn {
+      display: none;
+      color: #ff4d4d;
+      background: rgba(255, 77, 77, 0.1);
+      border: 1px solid rgba(255, 77, 77, 0.3);
+      padding: 0.3rem 0.6rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+
+    .admin-logged-in .remove-btn, .coowner-logged-in .remove-btn { display: inline-block; }
+
+    .admin-logged-in [contenteditable="true"] {
+      border: 1px dashed var(--void-cyan);
+      padding: 2px 6px;
+      border-radius: 6px;
+      background: rgba(0, 240, 255, 0.05);
+    }
+
+    footer {
+      text-align: center;
+      padding: 3rem 0;
+      color: var(--text-sub);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--void-cyan);
+      color: #030407;
+      padding: 1rem 2rem;
+      border-radius: 14px;
+      font-weight: 800;
+      box-shadow: 0 0 30px var(--void-glow);
+      opacity: 0;
+      transform: translateY(25px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      pointer-events: none;
+      z-index: 3000;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+<body id="bodyRoot">
+
+  <!-- Navigation Bar -->
+  <nav class="top-nav">
+    <div class="nav-links">
+      <a href="#start" id="navStart">Startseite</a>
+      <a href="#about" id="navAbout">Über mich</a>
+      <a href="#minecraft" id="navMc">Minecraft Hub</a>
+    </div>
+    <div class="nav-controls">
+      <span class="role-badge-nav" id="roleBadgeNav">Gast</span>
+      <button class="undo-btn" onclick="undo()" title="Rückgängig (Undo)">↶</button>
+      <button class="undo-btn" onclick="redo()" title="Wiederherstellen (Redo)">↷</button>
+      <button class="admin-guide-btn" onclick="openAdminGuideModal()" id="btnAdminGuide">⚙️ Info</button>
+      <button class="settings-btn" onclick="openSettingsModal()">⚙️ <span id="settingsText">Settings</span></button>
+      <button class="logout-admin-btn" onclick="logoutAdmin()" id="btnLogoutAdmin">🔒 Abmelden</button>
+    </div>
+  </nav>
+
+  <canvas id="bg-canvas"></canvas>
+  <div class="mouse-glow" id="mouseGlow"></div>
+
+  <div class="container">
+    
+    <!-- Header Section -->
+    <header id="start">
+      <h1 class="title-glitch" contenteditable="false" id="editableTitle">GameFusion</h1>
+      <p class="sub-title" contenteditable="false" id="editableSub">Official Gaming Hub & VoidSMP Community</p>
+
+      <div>
+        <span class="sub-badge">
+          🔥 <span id="liveSubCount">2.230</span> <span id="subText">Abonnenten auf YouTube</span>
+        </span>
+      </div>
+
+      <div class="social-row">
+        <a href="https://youtube.com/@GameFusion_05301" target="_blank" class="social-btn yt">
+          <span class="social-icon">🔴</span>
+          <span>YouTube</span>
+        </a>
+        <a href="https://www.twitch.tv/gamefosion" target="_blank" class="social-btn twitch">
+          <span class="social-icon">🟣</span>
+          <span>Twitch</span>
+        </a>
+        <a href="https://discord.gg/z2R67cVB8A" target="_blank" class="social-btn discord">
+          <span class="social-icon">🔵</span>
+          <span>Discord</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Über mich Tab -->
+    <section class="card" id="about">
+      <h2 class="section-title" contenteditable="false">👤 <span id="aboutHeader">Über mich</span></h2>
+      <p style="color: var(--text-sub); line-height: 1.6; margin-bottom: 1.5rem;" contenteditable="false" id="aboutDesc">
+        Hi! Ich freue mich riesig, dich auf meiner offiziellen Hub-Website begrüßen zu dürfen. Hier erfährst du alles Wichtige über mich und meine Projekte.
+      </p>
+
+      <div class="about-grid">
+        <div class="about-item">
+          <h4 contenteditable="false">📌 <span id="aboutNameTitle">Name</span></h4>
+          <p><span id="aboutNameText">Mein Name ist</span> <strong>Neo</strong>.</p>
+        </div>
+        <div class="about-item">
+          <h4 contenteditable="false">📺 Creator</h4>
+          <p id="aboutCreatorText">Ich bin ein kleiner YouTuber mit ca. 3.000 Abonnenten und streame aktiv auf Twitch. Ich freue mich über jeden neuen Abonnenten!</p>
+        </div>
+        <div class="about-item">
+          <h4 contenteditable="false" id="aboutLinksTitle">🌐 Meine Kanäle & Server</h4>
+          <ul>
+            <li>• YouTube: <a href="https://youtube.com/@GameFusion_05301" target="_blank">@GameFusion_05301</a></li>
+            <li>• Twitch: <a href="https://www.twitch.tv/gamefosion" target="_blank">gamefosion</a></li>
+            <li>• Main Discord: <a href="https://discord.gg/z2R67cVB8A" target="_blank">GameFusion Server</a></li>
+            <li>• VoidSMP Discord: <a href="https://discord.gg/pSTxs4zusJ" target="_blank">VoidSMP Community</a></li>
+          </ul>
+        </div>
+        <div class="about-item">
+          <h4 contenteditable="false" id="aboutPlayTitle">🎮 Wo ich spiele</h4>
+          <p id="aboutPlayText">Ich spiele aktiv auf dem Minecraft-Server <strong>VoidSMP</strong> (IP: <code>voidsmp.ipv64.de</code>), auf dem ich sehr viel mithelfe, baue und die Community unterstütze.</p>
+        </div>
+        <div class="about-item" style="grid-column: 1 / -1;">
+          <h4 contenteditable="false" id="aboutRespectTitle">🤝 Meine Einstellung</h4>
+          <p id="aboutRespectText">Mir ist es extrem wichtig, <strong>jeden einzelnen Menschen sehr zu respektieren</strong> und ein faires, cooles Miteinander zu pflegen – sowohl in Streams und Videos als auch auf dem Minecraft-Server!</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Minecraft Hub Section -->
+    <section class="card" id="minecraft">
+      <h2 class="section-title" contenteditable="false">⛏️ Minecraft Hub (Void Clan & VoidSMP)</h2>
+      
+      <!-- Clan Bereich -->
+      <div style="margin-bottom: 3rem; padding-bottom: 2.5rem; border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+        <div class="clan-header">
+          <h3 class="section-title" style="font-size: 1.8rem;" contenteditable="false">🛡️ Void Clan & Member</h3>
+        </div>
+
+        <div class="owners-grid">
+          <div class="owner-card">
+            <div class="owner-avatar-emoji">👑</div>
+            <div>
+              <span style="font-size: 0.85rem; color: var(--text-sub); display: block;" id="ownerRoleLabel">OWNER</span>
+              <span style="font-size: 1.25rem; font-weight: 800; color: #fff;">GameFusion</span>
+            </div>
+          </div>
+          <div class="owner-card">
+            <div class="owner-avatar-emoji">⚡</div>
+            <div>
+              <span style="font-size: 0.85rem; color: var(--text-sub); display: block;" id="coOwnerRoleLabel">CO-OWNER</span>
+              <span style="font-size: 1.25rem; font-weight: 800; color: #fff;">MarexianCool</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Secret Admin / Co-Owner Panel -->
+        <div class="admin-panel" id="adminPanel">
+          <h3 style="margin-bottom: 1rem; color: var(--void-cyan);">⚙️ Clan Mitglieder Verwalten</h3>
+          <div class="admin-form">
+            <input type="text" id="memberNameInput" class="admin-input" placeholder="Spielername...">
+            <select id="memberRoleSelect" class="admin-select">
+              <option value="owner">Owner (Rot - Max 1x)</option>
+              <option value="coowner">Co-Owner (Blau - Max 2x)</option>
+              <option value="trusted">Trusted (Pink - Unendlich)</option>
+              <option value="member" selected>Mitglied (Grau - Unendlich)</option>
+            </select>
+            <button class="admin-btn" onclick="addMember()">Hinzufügen</button>
+          </div>
+          
+          <div id="masterAdminControls" style="display:none; margin-top: 1rem;">
+            <button class="reset-layout-btn" id="resetLayoutBtn" onclick="resetLayout()">🔄 Sortierung & Layout zurücksetzen</button>
+          </div>
+        </div>
+
+        <!-- Drag & Drop Mitgliederliste -->
+        <div class="public-member-section">
+          <h3 style="margin-bottom: 0.8rem; font-size: 1.2rem; color: #fff;" id="membersTitle">👥 Aktuelle Clan Mitglieder</h3>
+          <ul class="member-list" id="memberList"></ul>
+        </div>
+
+        <!-- Join Anleitung -->
+        <div class="guide-box">
+          <h3 class="guide-title" contenteditable="false" id="guideClanTitle">📝 Wie joine ich dem Clan?</h3>
+          <p class="guide-text" contenteditable="false" id="guideClanText">
+            1. Joine zuerst unserem Main Discord-Server: <a href="https://discord.gg/z2R67cVB8A" target="_blank" class="guide-link">GameFusion Discord</a>.<br>
+            2. Gehe dort in den Ticket-Bereich und erstelle ein Ticket für den <strong>Clan</strong>.<br>
+            3. Wähle im Ticket den Owner oder Co-Owner aus.<br>
+            4. Antworte auf folgende Fragen: <strong>Deine Stärken, ob du aktiv spielst und wie viele Spieltage du hast.</strong>
+          </p>
+        </div>
+      </div>
+
+      <!-- VoidSMP Server Info & Regeln -->
+      <h2 class="section-title" style="font-size: 2rem; margin-top: 1rem;" contenteditable="false">🌌 VoidSMP Server & Regeln</h2>
+      <p style="color: var(--text-sub); line-height: 1.6; margin-bottom: 1.2rem;" contenteditable="false" id="mcDesc">
+        Willkommen im offiziellen VoidSMP Server-Bereich! Hier findest du alle Infos zum Server und den Regeln.
+      </p>
+
+      <div class="server-status-bar">
+        <div class="status-item">
+          <div class="status-dot"></div>
+          <span>Status: <strong id="statusOnline">Online</strong></span>
+        </div>
+        <div class="status-item">
+          <span>Spieler: <strong id="playerOnline">~12 / 64 Online</strong></span>
+        </div>
+        <div class="status-item">
+          <span>Version: <strong>1.21.11</strong></span>
+        </div>
+      </div>
+
+      <div class="ip-box" id="ipBox" onclick="copyIP()">
+        <div>
+          <span style="font-size: 0.85rem; color: var(--text-sub); display: block;" id="ipLabel">SERVER IP ADRESSE</span>
+          <span class="ip-text" id="serverIP">voidsmp.ipv64.de</span>
+        </div>
+        <button class="copy-btn" id="copyBtnText">IP Kopieren</button>
+      </div>
+
+      <div class="guide-box">
+        <h3 class="guide-title" contenteditable="false" id="guideDiscordTitle">🌌 Wie joine ich dem VoidSMP Discord?</h3>
+        <p class="guide-text" contenteditable="false" id="guideDiscordText">
+          Um alle wichtigen Infos, Ankündigungen und Updates zu erhalten, trete dem offiziellen VoidSMP Discord bei: 
+          <a href="https://discord.gg/pSTxs4zusJ" target="_blank" class="guide-link">👉 VoidSMP Discord beitreten</a>.
+        </p>
+      </div>
+
+      <h3 style="margin: 2rem 0 0.8rem; font-size: 1.2rem; color: #fff;" contenteditable="false" id="featuresTitle">⚡ Server Features</h3>
+      <div class="features-grid">
+        <div class="feature-tag">🌍 /rtp – Zufälliger Teleport</div>
+        <div class="feature-tag">⚔️ /rtpqueue – PvP Queue</div>
+        <div class="feature-tag">👥 /tpa – Zu Freunden teleportieren</div>
+        <div class="feature-tag">🏠 /home – Zuhause setzen</div>
+        <div class="feature-tag">🛒 /shop – Items kaufen</div>
+        <div class="feature-tag">💰 /sellgui – Items verkaufen</div>
+      </div>
+
+      <div class="rules-container">
+        <h3 style="margin-bottom: 1rem; color: var(--void-cyan); font-size: 1.4rem;" contenteditable="false" id="rulesTitle">📜 VoidSMP Regeln</h3>
+        <div class="rules-list">
+          <div class="rule-card" contenteditable="false">
+            <strong>🤝 <span id="rule1Title">Respekt</span>:</strong> <span id="rule1Text">Behandle andere Spieler respektvoll und fair. Kein Spam, keine Werbung und keine Hassrede.</span>
+          </div>
+          <div class="rule-card strict" contenteditable="false">
+            <strong>🚫 <span id="rule2Title">Keine Cheats & Hacks</span>:</strong> <span id="rule2Text">Keine Hacks, X-Ray, Exploits oder Dupes. Das Ausnutzen von Fehlern ist strengstens verboten.</span>
+          </div>
+          <div class="rule-card" contenteditable="false">
+            <strong>⚔️ <span id="rule3Title">PvP & Raiden</span>:</strong> <span id="rule3Text">Griefen und Raiden von Spielerbasen ist komplett erlaubt. PvP findet auf eigenen Wunsch oder in der Queue statt.</span>
+          </div>
+          <div class="rule-card strict" contenteditable="false">
+            <strong>⚙️ <span id="rule4Title">Server-Performance</span>:</strong> <span id="rule4Text">Das Absichtlich-Laggen oder Flooden des Servers ist verboten.</span>
+          </div>
+          <div class="rule-card" contenteditable="false">
+            <strong>⚖️ <span id="rule5Title">Entscheidung</span>:</strong> <span id="rule5Text">Das Serverteam entscheidet verbindlich über Verwarnungen, temporäre Sperren oder permanente Bans.</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Footer mit verstecktem Admin-Trigger (•) -->
+    <footer>
+      <p>&copy; 2026 GameFusion & VoidSMP. Alle Rechte vorbehalten. <button class="secret-admin-trigger" onclick="openLoginModal()" title="Login">•</button></p>
+    </footer>
+
+  </div>
+
+  <!-- Login Modal -->
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal-box">
+      <h3 class="modal-title">🔐 Admin Login</h3>
+      <input type="text" id="modalUser" class="modal-input" placeholder="Benutzername (GameFusion / MarexianCool)...">
+      <input type="password" id="modalPass" class="modal-input" placeholder="Passwort eingeben..." onkeydown="if(event.key === 'Enter') submitLogin()">
+      <div class="modal-buttons">
+        <button class="modal-btn-cancel" onclick="closeLoginModal()">Abbrechen</button>
+        <button class="modal-btn-confirm" onclick="submitLogin()">Einloggen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Guide Modal -->
+  <div class="modal-overlay" id="adminGuideModal">
+    <div class="modal-box">
+      <h3 class="modal-title">📖 Info & Hilfe</h3>
+      <div style="color: var(--text-sub); line-height: 1.6; display: flex; flex-direction: column; gap: 1rem;">
+        <p><strong>🛡️ Owner (GameFusion):</strong><br>Voller Zugriff auf alle Texte (direkt anklickbar), Drag & Drop der Clan-Mitglieder, Mitglieder-Verwaltung, Undo/Redo-Pfeile und Passwort-Änderung in den Settings.</p>
+        <p><strong>⚡ Co-Owner (MarexianCool):</strong><br>Kann Clan-Mitglieder hinzufügen und löschen.</p>
+      </div>
+      <div style="margin-top: 1.5rem;">
+        <button class="modal-btn-confirm" onclick="closeAdminGuideModal()">Verstanden</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-box">
+      <h3 class="modal-title">⚙️ Einstellungen / Settings</h3>
+      
+      <div style="margin-bottom: 1.2rem;">
+        <label style="display: block; color: var(--text-sub); margin-bottom: 0.5rem; font-weight: 700;" id="langLabel">Sprache / Language</label>
+        <select id="langSelect" class="modal-select" onchange="changeLanguage(this.value)">
+          <option value="de">Deutsch</option>
+          <option value="en">English</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <label style="display: block; color: var(--text-sub); margin-bottom: 0.5rem; font-weight: 700;" id="themeLabel">Akzent-Farbe / Theme Color</label>
+        <select id="themeSelect" class="modal-select" onchange="changeTheme(this.value)">
+          <option value="cyan">Cyber Cyan (Standard)</option>
+          <option value="pink">Neon Pink</option>
+          <option value="green">Toxic Grün</option>
+          <option value="purple">Royal Violett</option>
+        </select>
+      </div>
+
+      <!-- Passwort-Verwaltung in Settings -->
+      <div id="settingsPasswordSection" style="display: none; border-top: 1px dashed var(--void-cyan); padding-top: 1.2rem; margin-top: 1.2rem;">
+        <h4 style="color: var(--void-cyan); margin-bottom: 1rem; font-size: 1.1rem;">🔑 Passwörter ändern (Owner Access)</h4>
+        
+        <label style="display: block; color: var(--text-sub); margin-bottom: 0.4rem; font-size: 0.9rem;">Passwort für <strong>MarexianCool</strong> (Co-Owner):</label>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+          <input type="text" id="settingCoOwnerPass" class="modal-input" style="margin-bottom:0;" placeholder="Neues Passwort...">
+          <button class="admin-btn" style="padding: 0.5rem 1rem;" onclick="savePasswordFromSettings('coowner')">Speichern</button>
+        </div>
+
+        <label style="display: block; color: var(--text-sub); margin-bottom: 0.4rem; font-size: 0.9rem;">Passwort für <strong>GameFusion</strong> (Owner):</label>
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+          <input type="text" id="settingOwnerPass" class="modal-input" style="margin-bottom:0;" placeholder="Neues Passwort...">
+          <button class="admin-btn" style="padding: 0.5rem 1rem;" onclick="savePasswordFromSettings('admin')">Speichern</button>
+        </div>
+      </div>
+
+      <div class="modal-buttons">
+        <button class="modal-btn-confirm" onclick="closeSettingsModal()">Schließen / Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">IP in die Zwischenablage kopiert!</div>
+
+  <script>
+    /* Fullscreen Star Canvas & Smooth Mouse Glow */
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let width, height, particles = [];
+    let mouse = { x: -1000, y: -1000 };
+    let smoothMouse = { x: -1000, y: -1000 };
+
+    function resizeCanvas() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    for (let i = 0; i < 90; i++) {
+      particles.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.7,
+        vy: (Math.random() - 0.5) * 0.7,
+        radius: Math.random() * 2 + 1
+      });
+    }
+
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+
+      // Smooth mouse glow interpolation (lerp)
+      smoothMouse.x += (mouse.x - smoothMouse.x) * 0.12;
+      smoothMouse.y += (mouse.y - smoothMouse.y) * 0.12;
+
+      const glow = document.getElementById('mouseGlow');
+      glow.style.left = `${smoothMouse.x}px`;
+      glow.style.top = `${smoothMouse.y}px`;
+
+      ctx.fillStyle = 'rgba(0, 240, 255, 0.6)';
+      particles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        let dx = mouse.x - p.x;
+        let dy = mouse.y - p.y;
+        let dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 150) {
+          ctx.strokeStyle = `rgba(0, 240, 255, ${1 - dist / 150})`;
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(mouse.x, mouse.y);
+          ctx.stroke();
+        }
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    document.querySelectorAll('.social-btn').forEach(btn => {
+      btn.addEventListener('mousemove', (e) => {
+        const rect = btn.getBoundingClientRect();
+        btn.style.setProperty('--x', `${e.clientX - rect.left}px`);
+        btn.style.setProperty('--y', `${e.clientY - rect.top}px`);
+      });
+    });
+
+    function copyIP() {
+      const ipText = "voidsmp.ipv64.de";
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(ipText).then(showToast);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = ipText;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showToast();
+      }
+    }
+
+    function showToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2500);
+    }
+
+    /* Undo & Redo History System */
+    let historyStack = [];
+    let historyIndex = -1;
+    let isUndoRedoAction = false;
+
+    function saveState() {
+      if (isUndoRedoAction) return;
+      const editableElements = document.querySelectorAll('[contenteditable="true"]');
+      const state = {};
+      editableElements.forEach((el, index) => {
+        state[index] = el.innerHTML;
+      });
+      
+      historyStack = historyStack.slice(0, historyIndex + 1);
+      historyStack.push(state);
+      historyIndex++;
+    }
+
+    function undo() {
+      if (historyIndex > 0) {
+        historyIndex--;
+        applyState(historyStack[historyIndex]);
+      }
+    }
+
+    function redo() {
+      if (historyIndex < historyStack.length - 1) {
+        historyIndex++;
+        applyState(historyStack[historyIndex]);
+      }
+    }
+
+    function applyState(state) {
+      if (!state) return;
+      isUndoRedoAction = true;
+      const editableElements = document.querySelectorAll('[contenteditable="true"]');
+      editableElements.forEach((el, index) => {
+        if (state[index] !== undefined) {
+          el.innerHTML = state[index];
+        }
+      });
+      isUndoRedoAction = false;
+    }
+
+    function attachEditableListeners() {
+      document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+        el.addEventListener('input', () => {
+          saveState();
+        });
+      });
+    }
+
+    /* Clan Mitgliederverwaltung */
+    let defaultMembers = [
+      { name: "GameFusion", role: "owner" },
+      { name: "MarexianCool", role: "coowner" }
+    ];
+    let members = JSON.parse(localStorage.getItem('void_clan_members')) || defaultMembers;
+
+    function renderMembers() {
+      const list = document.getElementById('memberList');
+      list.innerHTML = '';
+      members.forEach((m, index) => {
+        const li = document.createElement('li');
+        li.className = 'member-item';
+        
+        if (document.body.classList.contains('admin-logged-in')) {
+          li.setAttribute('draggable', 'true');
+          li.dataset.index = index;
+          li.addEventListener('dragstart', handleDragStart);
+          li.addEventListener('dragover', handleDragOver);
+          li.addEventListener('drop', handleDrop);
+          li.addEventListener('dragend', handleDragEnd);
+        }
+        
+        let roleBadge = '';
+        let roleClass = '';
+        if(m.role === 'owner') { roleBadge = 'Owner'; roleClass = 'badge-owner'; }
+        else if(m.role === 'coowner') { roleBadge = 'Co-Owner'; roleClass = 'badge-coowner'; }
+        else if(m.role === 'trusted') { roleBadge = 'Trusted'; roleClass = 'badge-trusted'; }
+        else { roleBadge = 'Mitglied'; roleClass = 'badge-member'; }
+
+        li.innerHTML = `
+          <span style="font-weight: 600; color: #fff;">${document.body.classList.contains('admin-logged-in') ? '⠿ ' : ''}${m.name}</span>
+          <div style="display: flex; align-items: center; gap: 0.8rem;">
+            <span class="${roleClass}">${roleBadge}</span>
+            <button class="remove-btn" onclick="removeMember(${index})" title="Löschen">✕</button>
+          </div>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    let draggedIndex = null;
+    function handleDragStart(e) {
+      draggedIndex = +this.dataset.index;
+      this.classList.add('dragging');
+    }
+    function handleDragOver(e) { e.preventDefault(); }
+    function handleDrop(e) {
+      e.preventDefault();
+      const targetIndex = +this.dataset.index;
+      if (draggedIndex !== targetIndex) {
+        const movedItem = members.splice(draggedIndex, 1)[0];
+        members.splice(targetIndex, 0, movedItem);
+        localStorage.setItem('void_clan_members', JSON.stringify(members));
+        renderMembers();
+      }
+    }
+    function handleDragEnd(e) { this.classList.remove('dragging'); }
+
+    function resetLayout() {
+      if(confirm("Möchtest du die ursprüngliche Sortierung wirklich wiederherstellen?")) {
+        members = [...defaultMembers];
+        localStorage.setItem('void_clan_members', JSON.stringify(members));
+        renderMembers();
+        alert("Layout wurde zurückgesetzt!");
+      }
+    }
+
+    /* Passwörter & Login Steuerung */
+    let adminPassword = localStorage.getItem('site_admin_pass') || "Per13Time37";
+    let coOwnerPassword = localStorage.getItem('site_coowner_pass') || "Minecraft123";
+
+    function savePasswordFromSettings(type) {
+      if(type === 'coowner') {
+        const val = document.getElementById('settingCoOwnerPass').value.trim();
+        if(val) {
+          coOwnerPassword = val;
+          localStorage.setItem('site_coowner_pass', coOwnerPassword);
+          alert("Passwort für MarexianCool wurde erfolgreich geändert!");
+          document.getElementById('settingCoOwnerPass').value = '';
+        }
+      } else if(type === 'admin') {
+        const val = document.getElementById('settingOwnerPass').value.trim();
+        if(val) {
+          adminPassword = val;
+          localStorage.setItem('site_admin_pass', adminPassword);
+          alert("Passwort für GameFusion wurde erfolgreich geändert!");
+          document.getElementById('settingOwnerPass').value = '';
+        }
+      }
+    }
+
+    function openLoginModal() {
+      document.getElementById('loginModal').classList.add('active');
+      document.getElementById('modalUser').value = '';
+      document.getElementById('modalPass').value = '';
+      document.getElementById('modalUser').focus();
+    }
+
+    function closeLoginModal() {
+      document.getElementById('loginModal').classList.remove('active');
+    }
+
+    function openAdminGuideModal() {
+      document.getElementById('adminGuideModal').classList.add('active');
+    }
+    function closeAdminGuideModal() {
+      document.getElementById('adminGuideModal').classList.remove('active');
+    }
+
+    function openSettingsModal() {
+      document.getElementById('settingsModal').classList.add('active');
+    }
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('active');
+    }
+
+    function submitLogin() {
+      const user = document.getElementById('modalUser').value.trim();
+      const pass = document.getElementById('modalPass').value;
+      
+      if ((user.toLowerCase() === "gamefusion" || user === "") && pass === adminPassword) {
+        closeLoginModal();
+        document.getElementById('adminPanel').classList.add('active');
+        document.getElementById('bodyRoot').classList.remove('coowner-logged-in');
+        document.getElementById('bodyRoot').classList.add('admin-logged-in');
+        document.getElementById('masterAdminControls').style.display = 'block';
+        document.getElementById('settingsPasswordSection').style.display = 'block';
+        document.getElementById('roleBadgeNav').innerText = "👑 OWNER (GameFusion)";
+        
+        document.querySelectorAll('h1, h2, h3, h4, p, .rule-card').forEach(el => {
+          el.setAttribute('contenteditable', 'true');
+        });
+
+        attachEditableListeners();
+        saveState();
+        renderMembers();
+        openAdminGuideModal();
+        alert("Erfolgreich als Owner (GameFusion) eingeloggt!");
+      } 
+      else if ((user.toLowerCase() === "marexiancool" || user === "") && pass === coOwnerPassword) {
+        closeLoginModal();
+        document.getElementById('adminPanel').classList.add('active');
+        document.getElementById('bodyRoot').classList.remove('admin-logged-in');
+        document.getElementById('bodyRoot').classList.add('coowner-logged-in');
+        document.getElementById('masterAdminControls').style.display = 'none';
+        document.getElementById('settingsPasswordSection').style.display = 'none';
+        document.getElementById('roleBadgeNav').innerText = "⚡ CO-OWNER (MarexianCool)";
+
+        document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+          el.setAttribute('contenteditable', 'false');
+        });
+
+        renderMembers();
+        openAdminGuideModal();
+        alert("Erfolgreich als Co-Owner (MarexianCool) eingeloggt!");
+      } else {
+        alert("Falscher Benutzername oder falsches Passwort!");
+      }
+    }
+
+    function logoutAdmin() {
+      document.getElementById('adminPanel').classList.remove('active');
+      document.getElementById('bodyRoot').classList.remove('admin-logged-in', 'coowner-logged-in');
+      document.getElementById('masterAdminControls').style.display = 'none';
+      document.getElementById('settingsPasswordSection').style.display = 'none';
+      document.getElementById('roleBadgeNav').innerText = "Gast";
+      
+      document.querySelectorAll('[contenteditable="true"]').forEach(el => {
+        el.setAttribute('contenteditable', 'false');
+      });
+
+      renderMembers();
+      alert("Erfolgreich ausgeloggt!");
+    }
+
+    function addMember() {
+      const input = document.getElementById('memberNameInput');
+      const roleSelect = document.getElementById('memberRoleSelect');
+      const name = input.value.trim();
+      const role = roleSelect.value;
+
+      if (name === "") return;
+
+      if (role === 'owner') {
+        const ownerCount = members.filter(m => m.role === 'owner').length;
+        if (ownerCount >= 1) {
+          alert("Es kann nur 1x die Rolle Owner geben!");
+          return;
+        }
+      }
+      if (role === 'coowner') {
+        const coOwnerCount = members.filter(m => m.role === 'coowner').length;
+        if (coOwnerCount >= 2) {
+          alert("Es kann maximal 2 Co-Owner geben!");
+          return;
+        }
+      }
+
+      members.push({ name: name, role: role });
+      localStorage.setItem('void_clan_members', JSON.stringify(members));
+      input.value = "";
+      renderMembers();
+    }
+
+    function removeMember(index) {
+      members.splice(index, 1);
+      localStorage.setItem('void_clan_members', JSON.stringify(members));
+      renderMembers();
+    }
+
+    renderMembers();
+
+    function changeTheme(theme) {
+      const root = document.documentElement;
+      if(theme === 'pink') {
+        root.style.setProperty('--void-cyan', '#ff007f');
+        root.style.setProperty('--void-glow', 'rgba(255, 0, 127, 0.7)');
+      } else if(theme === 'green') {
+        root.style.setProperty('--void-cyan', '#00ff66');
+        root.style.setProperty('--void-glow', 'rgba(0, 255, 102, 0.7)');
+      } else if(theme === 'purple') {
+        root.style.setProperty('--void-cyan', '#bf00ff');
+        root.style.setProperty('--void-glow', 'rgba(191, 0, 255, 0.7)');
+      } else {
+        root.style.setProperty('--void-cyan', '#00f0ff');
+        root.style.setProperty('--void-glow', 'rgba(0, 240, 255, 0.7)');
+      }
+    }
+
+    function changeLanguage(lang) {
+      if(lang === 'en') {
+        document.getElementById('navStart').innerText = "Home";
+        document.getElementById('navAbout').innerText = "About Me";
+        document.getElementById('navMc').innerText = "Minecraft Hub";
+        document.getElementById('settingsText').innerText = "Settings";
+        document.getElementById('btnAdminGuide').innerText = "⚙️ Info";
+        document.getElementById('btnLogoutAdmin').innerText = "🔒 Logout";
+        document.getElementById('subText').innerText = "Subscribers on YouTube";
+        document.getElementById('aboutHeader').innerText = "About Me";
+        document.getElementById('aboutDesc').innerText = "Hi! I am super excited to welcome you to my official hub website.";
+        document.getElementById('aboutNameTitle').innerText = "Name";
+        document.getElementById('aboutNameText').innerText = "My name is";
+        document.getElementById('aboutCreatorText').innerText = "I am a small YouTuber with ~3,000 subscribers and active Twitch streamer!";
+        document.getElementById('aboutLinksTitle').innerText = "My Channels & Servers";
+        document.getElementById('aboutPlayTitle').innerText = "Where I Play";
+        document.getElementById('aboutPlayText').innerText = "I am actively playing on the Minecraft server VoidSMP (IP: voidsmp.ipv64.de).";
+        document.getElementById('aboutRespectTitle').innerText = "My Mindset";
+        document.getElementById('aboutRespectText').innerText = "Respecting everyone and maintaining a fair and friendly community is my top priority!";
+        document.getElementById('mcDesc').innerText = "Welcome to the official VoidSMP Server section!";
+        document.getElementById('ipLabel').innerText = "SERVER IP ADDRESS";
+        document.getElementById('copyBtnText').innerText = "Copy IP";
+        document.getElementById('guideDiscordTitle').innerText = "🌌 How to join VoidSMP Discord?";
+        document.getElementById('guideDiscordText').innerHTML = `To get all important infos, join the official VoidSMP Discord: <a href="https://discord.gg/pSTxs4zusJ" target="_blank" class="guide-link">👉 Join VoidSMP Discord</a>.`;
+        document.getElementById('featuresTitle').innerText = "⚡ Server Features";
+        document.getElementById('rulesTitle').innerText = "📜 VoidSMP Rules";
+        document.getElementById('rule1Title').innerText = "Respect";
+        document.getElementById('rule1Text').innerText = "Treat other players with respect and fairness.";
+        document.getElementById('rule2Title').innerText = "No Cheats & Hacks";
+        document.getElementById('rule2Text').innerText = "No hacks, X-Ray, exploits or dupes.";
+        document.getElementById('rule3Title').innerText = "PvP & Raiding";
+        document.getElementById('rule3Text').innerText = "Griefing and raiding bases is fully allowed.";
+        document.getElementById('rule4Title').innerText = "Server Performance";
+        document.getElementById('rule4Text').innerText = "Lag machines or flooding the server is forbidden.";
+        document.getElementById('rule5Title').innerText = "Staff Decision";
+        document.getElementById('rule5Text').innerText = "The staff team decides bindingly on bans.";
+        document.getElementById('membersTitle').innerText = "👥 Current Clan Members";
+        document.getElementById('guideClanTitle').innerText = "📝 How to join the Clan?";
+        document.getElementById('guideClanText').innerHTML = `1. Join our Main Discord: <a href="https://discord.gg/z2R67cVB8A" target="_blank" class="guide-link">GameFusion Discord</a>.<br>2. Open a ticket for the <strong>Clan</strong>.<br>3. Select Owner or Co-Owner.<br>4. Answer with your strengths, activity and days played!`;
+        document.getElementById('ownerRoleLabel').innerText = "OWNER";
+        document.getElementById('coOwnerRoleLabel').innerText = "CO-OWNER";
+      } else {
+        document.getElementById('navStart').innerText = "Startseite";
+        document.getElementById('navAbout').innerText = "Über mich";
+        document.getElementById('navMc').innerText = "Minecraft Hub";
+        document.getElementById('settingsText').innerText = "Settings";
+        document.getElementById('btnAdminGuide').innerText = "⚙️ Info";
+        document.getElementById('btnLogoutAdmin').innerText = "🔒 Abmelden";
+        document.getElementById('subText').innerText = "Abonnenten auf YouTube";
+        document.getElementById('aboutHeader').innerText = "Über mich";
+        document.getElementById('aboutDesc').innerText = "Hi! Ich freue mich riesig, dich auf meiner offiziellen Hub-Website begrüßen zu dürfen.";
+        document.getElementById('aboutNameTitle').innerText = "Name";
+        document.getElementById('aboutNameText').innerText = "Mein Name ist";
+        document.getElementById('aboutCreatorText').innerText = "Ich bin ein kleiner YouTuber mit ca. 3.000 Abonnenten und streame aktiv auf Twitch.";
+        document.getElementById('aboutLinksTitle').innerText = "Meine Kanäle & Server";
+        document.getElementById('aboutPlayTitle').innerText = "Wo ich spiele";
+        document.getElementById('aboutPlayText').innerText = "Ich spiele aktiv auf dem Minecraft-Server VoidSMP (IP: voidsmp.ipv64.de).";
+        document.getElementById('aboutRespectTitle').innerText = "Meine Einstellung";
+        document.getElementById('aboutRespectText').innerText = "Mir ist es extrem wichtig, jeden einzelnen Menschen sehr zu respektieren!";
+        document.getElementById('mcDesc').innerText = "Willkommen im offiziellen VoidSMP Server-Bereich!";
+        document.getElementById('ipLabel').innerText = "SERVER IP ADRESSE";
+        document.getElementById('copyBtnText').innerText = "IP Kopieren";
+        document.getElementById('guideDiscordTitle').innerText = "🌌 Wie joine ich dem VoidSMP Discord?";
+        document.getElementById('guideDiscordText').innerHTML = `Um alle wichtigen Infos zu erhalten, trete dem VoidSMP Discord bei: <a href="https://discord.gg/pSTxs4zusJ" target="_blank" class="guide-link">👉 VoidSMP Discord beitreten</a>.`;
+        document.getElementById('featuresTitle').innerText = "⚡ Server Features";
+        document.getElementById('rulesTitle').innerText = "📜 VoidSMP Regeln";
+        document.getElementById('rule1Title').innerText = "Respekt";
+        document.getElementById('rule1Text').innerText = "Behandle andere Spieler respektvoll und fair.";
+        document.getElementById('rule2Title').innerText = "Keine Cheats & Hacks";
+        document.getElementById('rule2Text').innerText = "Keine Hacks, X-Ray, Exploits oder Dupes.";
+        document.getElementById('rule3Title').innerText = "PvP & Raiden";
+        document.getElementById('rule3Title').innerText = "Griefen und Raiden von Spielerbasen ist komplett erlaubt.";
+        document.getElementById('rule4Title').innerText = "Server-Performance";
+        document.getElementById('rule4Text').innerText = "Das Absichtlich-Laggen oder Flooden des Servers ist verboten.";
+        document.getElementById('rule5Title').innerText = "Entscheidung";
+        document.getElementById('rule5Text').innerText = "Das Serverteam entscheidet verbindlich.";
+        document.getElementById('membersTitle').innerText = "👥 Aktuelle Clan Mitglieder";
+        document.getElementById('guideClanTitle').innerText = "📝 Wie joine ich dem Clan?";
+        document.getElementById('guideClanText').innerHTML = `1. Joine zuerst unserem Main Discord: <a href="https://discord.gg/z2R67cVB8A" target="_blank" class="guide-link">GameFusion Discord</a>.<br>2. Erstelle ein Ticket für den <strong>Clan</strong>.<br>3. Wähle im Ticket Owner oder Co-Owner aus.<br>4. Nenne deine Stärken, Aktivität und Spieltage!`;
+        document.getElementById('ownerRoleLabel').innerText = "OWNER";
+        document.getElementById('coOwnerRoleLabel').innerText = "CO-OWNER";
+      }
+    }
+
+    const YOUTUBE_API_KEY = "AIzaSyBhaEGM68RjST9OomQ-FzOp_ljDknzHGZQ"; 
+    const YOUTUBE_HANDLE = "GameFusion_05301";
+
+    async function updateLiveSubscribers() {
+      try {
+        const res = await fetch(`https://www.googleapis.com/youtube/v3/channels?part=statistics&forHandle=${YOUTUBE_HANDLE}&key=${YOUTUBE_API_KEY}`);
+        const data = await res.json();
+        if (data.items && data.items.length > 0) {
+          const subs = data.items[0].statistics.subscriberCount;
+          document.getElementById('liveSubCount').innerText = Number(subs).toLocaleString('de-DE');
+        }
+      } catch (err) {
+        console.error("Fehler beim Laden der Abos:", err);
+      }
+    }
+    updateLiveSubscribers();
+  </script>
+</body>
+</html>
